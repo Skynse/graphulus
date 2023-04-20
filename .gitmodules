@@ -1,0 +1,3 @@
+[submodule "pixela_eval"]
+	path = pixela_eval
+	url = https://github.com/skynse/pixela_eval

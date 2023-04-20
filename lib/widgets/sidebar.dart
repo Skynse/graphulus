@@ -1,24 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphulus/models/expression.dart';
 
-class SideBar extends StatefulWidget {
+import '../models/expression_provider.dart';
+
+class SideBar extends ConsumerStatefulWidget {
   const SideBar({super.key});
 
   @override
-  State<SideBar> createState() => _SideBarState();
+  ConsumerState<SideBar> createState() => _SideBarState();
 }
 
-class _SideBarState extends State<SideBar> {
-  List<Expression> expressions = [];
+class _SideBarState extends ConsumerState<SideBar> {
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      width: 200,
+      width: 400,
+      curve: Curves.easeInOut,
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[300]!),
         borderRadius: BorderRadius.circular(10),
       ),
-      duration: Duration(milliseconds: 500),
+      duration: const Duration(milliseconds: 500),
       child: Column(
         children: [
           Container(
@@ -29,10 +32,10 @@ class _SideBarState extends State<SideBar> {
                 IconButton(
                   onPressed: () {
                     setState(() {
-                      expressions.add(Expression(
-                        expression: 'x^2',
-                        color: Colors.red,
-                      ));
+                      ref.read(expressionProvider.notifier).add(Expression(
+                            expression: 'x^2',
+                            color: Colors.red,
+                          ));
                     });
                   },
                   icon: Icon(Icons.add),
@@ -58,13 +61,11 @@ class _SideBarState extends State<SideBar> {
           // expression list
           Expanded(
             child: ListView.builder(
-              itemCount: expressions.length,
+              itemCount: ref.read(expressionProvider.notifier).state.length,
               itemBuilder: (context, index) {
                 return SideBarEntry(
-                  expression: Expression(
-                    expression: 'x^2',
-                    color: Colors.red,
-                  ),
+                  expression:
+                      ref.read(expressionProvider.notifier).state[index],
                 );
               },
             ),
@@ -75,24 +76,17 @@ class _SideBarState extends State<SideBar> {
   }
 }
 
-class SideBarEntry extends StatefulWidget {
+class SideBarEntry extends ConsumerWidget {
   const SideBarEntry({super.key, required this.expression});
 
   final Expression expression;
 
   @override
-  State<SideBarEntry> createState() => _SideBarEntryState();
-}
-
-class _SideBarEntryState extends State<SideBarEntry> {
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: EdgeInsets.all(10),
-      margin: EdgeInsets.all(2),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         children: [
@@ -100,16 +94,24 @@ class _SideBarEntryState extends State<SideBarEntry> {
             onPressed: () {},
             icon: Icon(Icons.drag_handle),
           ),
-          const Expanded(
+          Expanded(
             child: TextField(
               decoration: InputDecoration(
                 border: InputBorder.none,
-                hintText: 'Enter an expression',
+                hintText: 'y = x^2',
               ),
+              onChanged: (value) {
+                ref.read(expressionProvider.notifier).update(Expression(
+                      expression: value,
+                      color: Colors.greenAccent,
+                    ));
+              },
             ),
           ),
           IconButton(
-            onPressed: () {},
+            onPressed: () {
+              ref.read(expressionProvider.notifier).remove(expression);
+            },
             icon: Icon(Icons.delete),
           ),
         ],

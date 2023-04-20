@@ -1,18 +1,23 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
+import 'package:graphulus/pixela/native.dart';
 
 class Expression {
-  Expression({expression, color}) {
-    expression = _expression;
-    color = _color;
+  Expression({
+    this.expression = '',
+    this.color = Colors.black,
+  });
+
+  final String? expression;
+  final Color color;
+
+  @override
+  String toString() {
+    return 'Expression{expression: $expression, color: $color}';
   }
 
-  late String _expression;
-  late Color _color;
-
-  get color => _color;
-
-  double evaluate(double x) {
-    // test with value of 1 for now
-    return 1;
+  double eval(double x) {
+    return evaluate(expression!, x);
   }
 }
