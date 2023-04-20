@@ -168,25 +168,6 @@ class CartesianPaperRenderObject extends RenderBox {
     canvas.drawLine(
         Offset(0, -size.height / 2), Offset(0, size.height / 2), paint);
 
-    //draw arrows
-    canvas.drawLine(
-        Offset(size.width / 2 - 10, 10), Offset(size.width / 2, 0), paint);
-    canvas.drawLine(
-        Offset(size.width / 2 - 10, -10), Offset(size.width / 2, 0), paint);
-    canvas.drawLine(
-        Offset(-size.width / 2 + 10, 10), Offset(-size.width / 2, 0), paint);
-    canvas.drawLine(
-        Offset(-size.width / 2 + 10, -10), Offset(-size.width / 2, 0), paint);
-    canvas.drawLine(
-        Offset(10, size.height / 2 - 10), Offset(0, size.height / 2), paint);
-
-    canvas.drawLine(
-        Offset(-10, size.height / 2 - 10), Offset(0, size.height / 2), paint);
-    canvas.drawLine(
-        Offset(10, -size.height / 2 + 10), Offset(0, -size.height / 2), paint);
-    canvas.drawLine(
-        Offset(-10, -size.height / 2 + 10), Offset(0, -size.height / 2), paint);
-
     // draw labels
     final textPainter = TextPainter(
       textDirection: TextDirection.ltr,
@@ -244,6 +225,36 @@ class CartesianPaperRenderObject extends RenderBox {
       );
       textPainter.layout();
       textPainter.paint(canvas, Offset(-10, -i.toDouble() - 5));
+
+      // !NOTE: Draw expressions
+      // draw the expressions
+      for (var idx = 0; idx < _data.length; idx++) {
+        final expression = _data[idx];
+        final color = expression.color;
+        final paint = Paint()
+          ..color = color
+          ..strokeWidth = 2;
+
+        // draw the expression
+        for (var i = 0; i < size.width / 2; i += _scaleX) {
+          final x = i / _scaleX * _increment;
+          final y = expression.evaluate(x);
+
+          // draw the point
+          canvas.drawCircle(Offset(x * _scaleX, -y * _scaleY), 2, paint);
+
+          // draw the line
+          if (i != 0) {
+            canvas.drawLine(
+                Offset(x * _scaleX, -y * _scaleY),
+                Offset(
+                    (i - _scaleX) / _scaleX * _increment * _scaleX,
+                    -expression.evaluate((i - _scaleX) / _scaleX * _increment) *
+                        _scaleY),
+                paint);
+          }
+        }
+      }
     }
   }
 }
