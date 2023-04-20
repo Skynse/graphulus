@@ -6,9 +6,9 @@ import 'package:graphulus/bridge_generated.dart';
 
 import 'package:graphulus/bridge_definitions.dart';
 
-const _base = 'native';
+const _base = 'pixela_eval';
 
-final _dylib = io.Platform.isWindows ? '$_base.dll' : 'lib$_base.so';
+final _dylib = io.Platform.isWindows ? '$_base.dll' : './lib$_base.so';
 final api = PixelaEvalImpl(io.Platform.isIOS || io.Platform.isMacOS
     ? DynamicLibrary.executable()
     : DynamicLibrary.open(_dylib));
@@ -16,11 +16,8 @@ final api = PixelaEvalImpl(io.Platform.isIOS || io.Platform.isMacOS
 typedef EvalFunc = Double Function(Pointer<Utf8>, Double);
 typedef Eval = double Function(Pointer<Utf8>, double);
 
-final dylib = io.Platform.isWindows ? 'mylib.dll' : 'libmylib.so';
-final lib = DynamicLibrary.open(dylib);
+final lib = DynamicLibrary.open(_dylib);
 final eval = lib.lookupFunction<EvalFunc, Eval>('eval');
-
-double result = eval('x^2 + 2x + 1'.toNativeUtf8(), 2);
 
 double evaluate(String expression, double x) {
   final result = eval(expression.toNativeUtf8(), x);

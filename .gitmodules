@@ -1,3 +1,6 @@
 [submodule "pixela_eval"]
 	path = pixela_eval
 	url = https://github.com/skynse/pixela_eval
+[submodule "native"]
+	path = native
+	url = https://github.com/skynse/pixela_eval
