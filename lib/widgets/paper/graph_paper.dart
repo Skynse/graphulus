@@ -172,6 +172,11 @@ class CartesianPaperRenderObject extends RenderBox {
   }
 
   @override
+  void attach(PipelineOwner owner) {
+    super.attach(owner);
+  }
+
+  @override
   void paint(PaintingContext context, Offset offset) {
     final canvas = context.canvas;
 
@@ -222,22 +227,6 @@ class CartesianPaperRenderObject extends RenderBox {
       }
 
       // draw the y-axis ticks
-
-      for (var i = 0.0; i < size.height / 2; i += _scaleY) {
-        // draw the positive ticks
-        canvas.drawLine(
-          Offset(0, i.toDouble()),
-          Offset(5, i.toDouble()),
-          paint,
-        );
-
-        // draw the negative ticks
-        canvas.drawLine(
-          Offset(0, -i.toDouble()),
-          Offset(5, -i.toDouble()),
-          paint,
-        );
-      }
 
       // draw the grid lines
       paint.strokeWidth = 0.5;
@@ -354,15 +343,16 @@ class CartesianPaperRenderObject extends RenderBox {
         for (var i = -size.width / 2; i < size.width / 2; i += increment) {
           final x = i / _scaleX * _increment;
           final y = expression.eval(x);
-
-          canvas.drawLine(
-            Offset(
-                (i - increment) / _scaleX * _increment * _scaleX,
-                -(expression.eval((i - increment) / _scaleX * _increment) *
-                    _scaleY)),
-            Offset(x * _scaleX, -y * _scaleY),
-            paint,
-          );
+          if (!(i - increment).isNaN && !x.isNaN && !y.isNaN) {
+            canvas.drawLine(
+              Offset(
+                  (i - increment) / _scaleX * _increment * _scaleX,
+                  -(expression.eval((i - increment) / _scaleX * _increment) *
+                      _scaleY)),
+              Offset(x * _scaleX, -y * _scaleY),
+              paint,
+            );
+          }
         }
       }
     }
