@@ -1,7 +1,12 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphulus/models/expression.dart';
 
-class ExpressionNotifier extends Notifier<List<Expression>> {
+class ExpressionNotifier extends StateNotifier<List<Expression>> {
+  ExpressionNotifier() : super([]);
+
+  int idCounter = 0;
+
   void add(Expression expression) {
     state = [...state, expression];
   }
@@ -14,8 +19,20 @@ class ExpressionNotifier extends Notifier<List<Expression>> {
     state = [];
   }
 
-  void update(Expression expression) {
-    state = state.map((e) => e == expression ? expression : e).toList();
+  void update(String id, String value) {
+    /** 
+    final updated = expression.copyWith(expression: updatedExpression);
+    state = state.map((e) => e == expression ? updated : e).toList();
+    */
+
+// don't make a new copy, just update the state with id
+// do not use copyWith otherwise the color will change
+    state = state.map((e) {
+      if (e.id == id) {
+        e.expression = value;
+      }
+      return e;
+    }).toList();
   }
 
   @override
@@ -25,5 +42,5 @@ class ExpressionNotifier extends Notifier<List<Expression>> {
 }
 
 final expressionProvider =
-    NotifierProvider<ExpressionNotifier, List<Expression>>(
-        ExpressionNotifier.new);
+    StateNotifierProvider<ExpressionNotifier, List<Expression>>(
+        (ref) => ExpressionNotifier());

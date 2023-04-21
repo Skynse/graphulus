@@ -29,11 +29,11 @@ class CartesianGraphPaper extends ConsumerStatefulWidget {
 }
 
 class _CartesianGraphPaperState extends ConsumerState<CartesianGraphPaper> {
-  double _scaleX = 100.0;
-  double _scaleY = 90.0;
+  double _scaleX = 50.0;
+  double _scaleY = 50.0;
   @override
   Widget build(BuildContext context) {
-    List<Expression> data = ref.watch(expressionProvider.notifier).state;
+    List<Expression> data = ref.watch(expressionProvider);
     return Container(
       clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
@@ -55,36 +55,42 @@ class _CartesianGraphPaperState extends ConsumerState<CartesianGraphPaper> {
               data: data,
             ),
           ),
-          Positioned(
-            top: 10,
-            right: 20,
-            child: Container(
-              width: 200,
-              height:
-                  ref.watch(expressionProvider.notifier).state.length * 50.0,
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[300]!),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: ListView.builder(
-                itemCount: data.length,
-                itemBuilder: (context, index) {
-                  return Container(
-                      decoration: BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(
-                            color: Colors.grey[300]!,
+          Visibility(
+            visible: data.isNotEmpty,
+            child: Positioned(
+              top: 10,
+              right: 20,
+              child: Container(
+                width: 200,
+                height:
+                    ref.watch(expressionProvider.notifier).state.length * 50.0,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey[300]!),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: ListView.builder(
+                  itemCount: data.length,
+                  itemBuilder: (context, index) {
+                    if (data[index].isValid()) {
+                      return Container(
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(
+                                color: Colors.grey[300]!,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                      child: ListTile(
-                        title: Text(ref
-                            .watch(expressionProvider.notifier)
-                            .state[index]
-                            .expression!),
-                        leading: Icon(Icons.circle, color: data[index].color),
-                      ));
-                },
+                          child: ListTile(
+                            title: Text(ref
+                                .watch(expressionProvider.notifier)
+                                .state[index]
+                                .expression!),
+                            leading:
+                                Icon(Icons.circle, color: data[index].color),
+                          ));
+                    }
+                  },
+                ),
               ),
             ),
           ),
@@ -183,121 +189,187 @@ class CartesianPaperRenderObject extends RenderBox {
       ..color = _lineColor
       ..strokeWidth = _lineWidth;
 
-    // draw the vertical lines
-    for (var i = 0.0; i < size.width / 2; i += _scaleX) {
-      if (i % 2 != 0) {
-        paint.strokeWidth = _lineWidth;
-      } else {
-        paint.strokeWidth = _lineWidth / 4;
-      }
-      canvas.drawLine(Offset(i.toDouble(), -size.height / 2),
-          Offset(i.toDouble(), size.height / 2), paint);
-      canvas.drawLine(Offset(-i.toDouble(), -size.height / 2),
-          Offset(-i.toDouble(), size.height / 2), paint);
-    }
+    void _drawAxes() {
+      // draw the x-axis
+      canvas.drawLine(
+        Offset(-size.width / 2, 0),
+        Offset(size.width / 2, 0),
+        paint,
+      );
 
-    // draw the horizontal lines
-    for (var i = 0.0; i < size.height / 2; i += _scaleY) {
-      // even odd thickness for better visibility
-      if (i % 2 != 0) {
-        paint.strokeWidth = _lineWidth;
-      } else {
-        paint.strokeWidth = _lineWidth / 4;
-      }
-      canvas.drawLine(Offset(-size.width / 2, i.toDouble()),
-          Offset(size.width / 2, i.toDouble()), paint);
-      canvas.drawLine(Offset(-size.width / 2, -i.toDouble()),
-          Offset(size.width / 2, -i.toDouble()), paint);
-    }
+      // draw the y-axis
+      canvas.drawLine(
+        Offset(0, -size.height / 2),
+        Offset(0, size.height / 2),
+        paint,
+      );
 
-    // draw the axes
-    paint.strokeWidth = 2;
-    canvas.drawLine(
-        Offset(-size.width / 2, 0), Offset(size.width / 2, 0), paint);
-    canvas.drawLine(
-        Offset(0, -size.height / 2), Offset(0, size.height / 2), paint);
+      // draw the x-axis ticks
+      for (var i = 0.0; i < size.width / 2; i += _scaleX) {
+        // draw the positive ticks
+        canvas.drawLine(
+          Offset(i.toDouble(), 0),
+          Offset(i.toDouble(), 5),
+          paint,
+        );
+
+        // draw the negative ticks
+        canvas.drawLine(
+          Offset(-i.toDouble(), 0),
+          Offset(-i.toDouble(), 5),
+          paint,
+        );
+      }
+
+      // draw the y-axis ticks
+
+      for (var i = 0.0; i < size.height / 2; i += _scaleY) {
+        // draw the positive ticks
+        canvas.drawLine(
+          Offset(0, i.toDouble()),
+          Offset(5, i.toDouble()),
+          paint,
+        );
+
+        // draw the negative ticks
+        canvas.drawLine(
+          Offset(0, -i.toDouble()),
+          Offset(5, -i.toDouble()),
+          paint,
+        );
+      }
+
+      // draw the grid lines
+      paint.strokeWidth = 0.5;
+      paint.color = Colors.grey[300]!;
+      for (var i = 0.0; i < size.width / 2; i += _scaleX) {
+        // draw the positive grid lines
+        canvas.drawLine(
+          Offset(i.toDouble(), -size.height / 2),
+          Offset(i.toDouble(), size.height / 2),
+          paint,
+        );
+
+        // draw the negative grid lines
+        canvas.drawLine(
+          Offset(-i.toDouble(), -size.height / 2),
+          Offset(-i.toDouble(), size.height / 2),
+          paint,
+        );
+      }
+
+      for (var i = 0.0; i < size.height / 2; i += _scaleY) {
+        // draw the positive grid lines
+        canvas.drawLine(
+          Offset(-size.width / 2, i.toDouble()),
+          Offset(size.width / 2, i.toDouble()),
+          paint,
+        );
+
+        // draw the negative grid lines
+        canvas.drawLine(
+          Offset(-size.width / 2, -i.toDouble()),
+          Offset(size.width / 2, -i.toDouble()),
+          paint,
+        );
+      }
+    }
 
     // draw labels
     final textPainter = TextPainter(
       textDirection: TextDirection.ltr,
     );
 
-    // draw the x-axis labels
-    for (var i = 0.0; i < size.width / 2; i += _scaleX) {
-      // increments of 2
-      textPainter.text = TextSpan(
-        text: (i / _scaleX * _increment).round().toString(),
-        style: TextStyle(
-          color: _lineColor,
-          fontSize: 10,
-        ),
-      );
-      textPainter.layout();
-      textPainter.paint(canvas, Offset(i.toDouble() - 5, 5));
+    void _drawLabels() {
+      // draw the x-axis labels
+      for (var i = 0.0; i < size.width / 2; i += _scaleX) {
+        // increments of 2
+        textPainter.text = TextSpan(
+          text: (i / _scaleX * _increment).round().toString(),
+          style: TextStyle(
+            color: _lineColor,
+            fontSize: 10,
+          ),
+        );
+        textPainter.layout();
+        textPainter.paint(canvas, Offset(i.toDouble() - 5, 5));
 
-      textPainter.text = TextSpan(
-        text: (-i / _scaleX * _increment).round().toString(),
-        style: TextStyle(
-          color: _lineColor,
-          fontSize: 10,
-        ),
-      );
-      textPainter.layout();
-      textPainter.paint(canvas, Offset(-i.toDouble() - 5, 5));
+        textPainter.text = TextSpan(
+          text: (-i / _scaleX * _increment).round().toString(),
+          style: TextStyle(
+            color: _lineColor,
+            fontSize: 10,
+          ),
+        );
+        textPainter.layout();
+        textPainter.paint(canvas, Offset(-i.toDouble() - 5, 5));
+      }
+
+      // draw the y-axis labels
+      for (var i = 0.0; i < size.height / 2; i += _scaleY) {
+        textPainter.text = TextSpan(
+          text: (i / _scaleY * _increment).round().toString(),
+          style: TextStyle(
+            color: _lineColor,
+            shadows: const <Shadow>[
+              Shadow(
+                offset: Offset(0.0, 0.0),
+                blurRadius: 3.0,
+                color: Colors.white,
+              ),
+            ],
+            fontSize: 10,
+          ),
+        );
+        textPainter.layout();
+        textPainter.paint(canvas, Offset(-10, i.toDouble() - 5));
+
+        textPainter.text = TextSpan(
+          text: (-i / _scaleY * _increment).round().toString(),
+          style: TextStyle(
+            color: _lineColor,
+            fontSize: 10,
+          ),
+        );
+        textPainter.layout();
+        textPainter.paint(canvas, Offset(-10, -i.toDouble() - 5));
+      }
     }
 
-    // draw the y-axis labels
-    for (var i = 0.0; i < size.height / 2; i += _scaleY) {
-      textPainter.text = TextSpan(
-        text: (i / _scaleY * _increment).round().toString(),
-        style: TextStyle(
-          color: _lineColor,
-          shadows: const <Shadow>[
-            Shadow(
-              offset: Offset(0.0, 0.0),
-              blurRadius: 3.0,
-              color: Colors.white,
-            ),
-          ],
-          fontSize: 10,
-        ),
-      );
-      textPainter.layout();
-      textPainter.paint(canvas, Offset(-10, i.toDouble() - 5));
-
-      textPainter.text = TextSpan(
-        text: (-i / _scaleY * _increment).round().toString(),
-        style: TextStyle(
-          color: _lineColor,
-          fontSize: 10,
-        ),
-      );
-      textPainter.layout();
-      textPainter.paint(canvas, Offset(-10, -i.toDouble() - 5));
-
+    void _drawPlots() {
       // !NOTE: Draw expressions
       // draw the expressions
       for (var idx = 0; idx < _data.length; idx++) {
         final expression = _data[idx];
+        if (!expression.isValid()) {
+          continue;
+        }
         final color = expression.color;
         final paint = Paint()
           ..color = color
           ..strokeWidth = 2;
 
         // draw the expression
-        for (var i = -size.width / 2; i < size.width / 2; i += _scaleX / 4) {
+        final increment = _scaleX / 20; // or some smaller value
+        for (var i = -size.width / 2; i < size.width / 2; i += increment) {
           final x = i / _scaleX * _increment;
           final y = expression.eval(x);
 
           canvas.drawLine(
-              Offset(
-                  (i - _scaleX / 4) / _scaleX * _increment * _scaleX,
-                  -(expression.eval((i - _scaleX / 4) / _scaleX * _increment) *
-                      _scaleY)),
-              Offset(x * _scaleX, -y * _scaleY),
-              paint);
+            Offset(
+                (i - increment) / _scaleX * _increment * _scaleX,
+                -(expression.eval((i - increment) / _scaleX * _increment) *
+                    _scaleY)),
+            Offset(x * _scaleX, -y * _scaleY),
+            paint,
+          );
         }
       }
     }
+
+    // clear canvas
+    _drawAxes();
+    _drawLabels();
+    _drawPlots();
   }
 }

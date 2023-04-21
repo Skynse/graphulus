@@ -1,23 +1,57 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:graphulus/pixela/native.dart';
+import 'package:math_expressions/math_expressions.dart';
+import 'package:uuid/uuid.dart';
 
 class Expression {
   Expression({
     this.expression = '',
-    this.color = Colors.black,
-  });
+    Color? color,
+    String? id,
+  })  : id = id ?? Uuid().v4(),
+        color = Color.fromARGB(255, Random().nextInt(255),
+            Random().nextInt(255), Random().nextInt(255));
 
-  final String? expression;
+  String? expression;
   final Color color;
+  final String id;
 
   @override
   String toString() {
     return 'Expression{expression: $expression, color: $color}';
   }
 
+  bool isValid() {
+    try {
+      final parser = Parser();
+      final exp = parser.parse(expression!);
+      final context = ContextModel();
+      context.bindVariableName('x', Number(0));
+      exp.evaluate(EvaluationType.REAL, context);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   double eval(double x) {
-    return evaluate(expression!, x);
+    final parser = Parser();
+    final exp = parser.parse(expression!);
+    final context = ContextModel();
+    context.bindVariableName('x', Number(x));
+    return exp.evaluate(EvaluationType.REAL, context);
+  }
+
+  Expression copyWith({
+    String? id,
+    String? expression,
+    Color? color,
+  }) {
+    return Expression(
+      id: id ?? this.id,
+      expression: expression ?? this.expression,
+      color: color ?? this.color,
+    );
   }
 }

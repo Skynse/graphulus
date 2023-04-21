@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphulus/models/expression.dart';
-
+import 'dart:async';
 import '../models/expression_provider.dart';
 
 class SideBar extends ConsumerStatefulWidget {
@@ -14,6 +14,7 @@ class SideBar extends ConsumerStatefulWidget {
 class _SideBarState extends ConsumerState<SideBar> {
   @override
   Widget build(BuildContext context) {
+    final expressions = ref.watch(expressionProvider);
     return AnimatedContainer(
       width: 400,
       curve: Curves.easeInOut,
@@ -31,12 +32,10 @@ class _SideBarState extends ConsumerState<SideBar> {
               children: [
                 IconButton(
                   onPressed: () {
-                    setState(() {
-                      ref.read(expressionProvider.notifier).add(Expression(
-                            expression: 'x^2',
-                            color: Colors.red,
-                          ));
-                    });
+                    ref.read(expressionProvider.notifier).add(Expression(
+                          expression: '',
+                          color: Colors.red,
+                        ));
                   },
                   icon: Icon(Icons.add),
                 ),
@@ -76,13 +75,24 @@ class _SideBarState extends ConsumerState<SideBar> {
   }
 }
 
-class SideBarEntry extends ConsumerWidget {
-  const SideBarEntry({super.key, required this.expression});
+class SideBarEntry extends ConsumerStatefulWidget {
+  SideBarEntry({super.key, required this.expression});
 
-  final Expression expression;
+  Expression expression;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SideBarEntry> createState() => _SideBarEntryState();
+}
+
+class _SideBarEntryState extends ConsumerState<SideBarEntry> {
+  TextEditingController controller = TextEditingController();
+
+  StreamController<String> _textController = StreamController<String>();
+
+  Timer _debounce = Timer(Duration.zero, () {});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -92,25 +102,26 @@ class SideBarEntry extends ConsumerWidget {
         children: [
           IconButton(
             onPressed: () {},
-            icon: Icon(Icons.drag_handle),
+            icon: Icon(Icons.circle, color: widget.expression.color),
           ),
           Expanded(
             child: TextField(
-              decoration: InputDecoration(
+              controller: controller,
+              decoration: const InputDecoration(
                 border: InputBorder.none,
-                hintText: 'y = x^2',
+                hintText: 'Expression',
               ),
               onChanged: (value) {
-                ref.read(expressionProvider.notifier).update(Expression(
-                      expression: value,
-                      color: Colors.greenAccent,
-                    ));
+                ref.read(expressionProvider.notifier).update(
+                      widget.expression.id,
+                      value,
+                    );
               },
             ),
           ),
           IconButton(
             onPressed: () {
-              ref.read(expressionProvider.notifier).remove(expression);
+              ref.read(expressionProvider.notifier).remove(widget.expression);
             },
             icon: Icon(Icons.delete),
           ),
