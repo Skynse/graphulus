@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -22,7 +24,7 @@ class CartesianGraphPaper extends ConsumerStatefulWidget {
   final Color lineColor;
   final double lineWidth;
   final double increment;
-  final List<Expression> data;
+  List<Expression> data;
 
   @override
   ConsumerState<CartesianGraphPaper> createState() =>
@@ -32,6 +34,7 @@ class CartesianGraphPaper extends ConsumerStatefulWidget {
 class _CartesianGraphPaperState extends ConsumerState<CartesianGraphPaper> {
   double _scaleX = 50.0;
   double _scaleY = 50.0;
+
   @override
   Widget build(BuildContext context) {
     List<Expression> data = ref.watch(expressionProvider);
@@ -128,7 +131,12 @@ class CartesianPaper extends CustomPainter {
 
   @override
   bool shouldRepaint(CartesianPaper oldDelegate) {
-    return !listEquals(data, oldDelegate.data);
+    return oldDelegate.scaleX != scaleX ||
+        oldDelegate.scaleY != scaleY ||
+        oldDelegate.lineColor != lineColor ||
+        oldDelegate.lineWidth != lineWidth ||
+        oldDelegate.increment != increment ||
+        oldDelegate.data != data;
   }
 
   @override
@@ -208,7 +216,7 @@ class CartesianPaper extends CustomPainter {
       for (var i = 0.0; i < halfHeight; i += scaleY) {
         // draw the positive grid lines
         canvas.drawLine(
-          Offset(-halfHeight, i.toDouble()),
+          Offset(-halfWidth, i.toDouble()),
           Offset(halfWidth, i.toDouble()),
           paint,
         );

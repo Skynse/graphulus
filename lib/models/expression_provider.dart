@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:graphulus/models/expression.dart';
@@ -44,3 +46,4 @@ class ExpressionNotifier extends StateNotifier<List<Expression>> {
 final expressionProvider =
     StateNotifierProvider<ExpressionNotifier, List<Expression>>(
         (ref) => ExpressionNotifier());
+final dataStreamController = StreamController<List<Expression>>.broadcast();

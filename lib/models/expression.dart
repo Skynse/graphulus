@@ -39,7 +39,9 @@ class Expression {
     final parser = Parser();
     final exp = parser.parse(expression!);
     final context = ContextModel();
+    // add support for x and y both
     context.bindVariableName('x', Number(x));
+
     return exp.evaluate(EvaluationType.REAL, context);
   }
 
