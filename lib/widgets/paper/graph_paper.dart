@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,75 +35,82 @@ class _CartesianGraphPaperState extends ConsumerState<CartesianGraphPaper> {
   @override
   Widget build(BuildContext context) {
     List<Expression> data = ref.watch(expressionProvider);
-    return Container(
-      clipBehavior: Clip.hardEdge,
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Stack(
-        children: [
-          // container for the expressions on top right corner
+    return RepaintBoundary(
+      child: Container(
+        clipBehavior: Clip.hardEdge,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[300]!),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Stack(
+          children: [
+            // container for the expressions on top right corner
 
-          InteractiveViewer(
-            scaleFactor: 1000,
-            child: CartesianPaper(
-              scaleX: _scaleX,
-              scaleY: _scaleY,
-              lineColor: widget.lineColor,
-              lineWidth: widget.lineWidth,
-              increment: widget.increment,
-              data: data,
-            ),
-          ),
-          Visibility(
-            visible: data.isNotEmpty,
-            child: Positioned(
-              top: 10,
-              right: 20,
-              child: Container(
-                width: 200,
-                height:
-                    ref.watch(expressionProvider.notifier).state.length * 50.0,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: ListView.builder(
-                  itemCount: data.length,
-                  itemBuilder: (context, index) {
-                    if (data[index].isValid()) {
-                      return Container(
-                          decoration: BoxDecoration(
-                            border: Border(
-                              bottom: BorderSide(
-                                color: Colors.grey[300]!,
-                              ),
-                            ),
-                          ),
-                          child: ListTile(
-                            title: Text(ref
-                                .watch(expressionProvider.notifier)
-                                .state[index]
-                                .expression!),
-                            leading:
-                                Icon(Icons.circle, color: data[index].color),
-                          ));
-                    }
-                  },
+            SizedBox(
+              width: MediaQuery.of(context).size.width,
+              height: MediaQuery.of(context).size.height,
+              child: InteractiveViewer(
+                scaleFactor: 1000,
+                child: CustomPaint(
+                  painter: CartesianPaper(
+                    scaleX: _scaleX,
+                    scaleY: _scaleY,
+                    lineColor: widget.lineColor,
+                    lineWidth: widget.lineWidth,
+                    increment: widget.increment,
+                    data: data,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+            Visibility(
+              visible: data.isNotEmpty,
+              child: Positioned(
+                top: 10,
+                right: 20,
+                child: Container(
+                  width: 200,
+                  height: ref.watch(expressionProvider.notifier).state.length *
+                      50.0,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey[300]!),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: ListView.builder(
+                    itemCount: data.length,
+                    itemBuilder: (context, index) {
+                      if (data[index].isValid()) {
+                        return Container(
+                            decoration: BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.grey[300]!,
+                                ),
+                              ),
+                            ),
+                            child: ListTile(
+                              title: Text(ref
+                                  .watch(expressionProvider.notifier)
+                                  .state[index]
+                                  .expression!),
+                              leading:
+                                  Icon(Icons.circle, color: data[index].color),
+                            ));
+                      }
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class CartesianPaper extends LeafRenderObjectWidget {
+class CartesianPaper extends CustomPainter {
   CartesianPaper({
-    super.key,
     this.scaleX = 1.0,
     this.scaleY = 1.0,
     this.lineColor = Colors.black,
@@ -119,98 +127,48 @@ class CartesianPaper extends LeafRenderObjectWidget {
   final List<Expression> data;
 
   @override
-  RenderObject createRenderObject(BuildContext context) {
-    return CartesianPaperRenderObject(
-      scaleX: scaleX,
-      scaleY: scaleY,
-      lineColor: lineColor,
-      lineWidth: lineWidth,
-      increment: increment,
-      data: data,
-    );
+  bool shouldRepaint(CartesianPaper oldDelegate) {
+    return !listEquals(data, oldDelegate.data);
   }
 
   @override
-  void updateRenderObject(
-      BuildContext context, CartesianPaperRenderObject renderObject) {
-    renderObject._data = data;
-    renderObject._scaleX = scaleX;
-    renderObject._scaleY = scaleY;
-    renderObject._lineColor = lineColor;
-    renderObject._lineWidth = lineWidth;
-  }
-}
-
-class CartesianPaperRenderObject extends RenderBox {
-  CartesianPaperRenderObject({
-    required double scaleX,
-    required double scaleY,
-    required Color lineColor,
-    required double lineWidth,
-    required double increment,
-    required List<Expression> data,
-  }) {
-    _scaleX = scaleX;
-    _scaleY = scaleY;
-    _lineColor = lineColor;
-    _lineWidth = lineWidth;
-    _increment = increment;
-    _data = data;
-  }
-
-  late double _scaleX;
-  late double _scaleY;
-  late Color _lineColor;
-  late double _lineWidth;
-  late List<Expression> _data;
-  late double _increment;
-
-  @override
-  void performLayout() {
-    // get the size of the parent
-    size = constraints.biggest;
-  }
-
-  @override
-  void attach(PipelineOwner owner) {
-    super.attach(owner);
-  }
-
-  @override
-  void paint(PaintingContext context, Offset offset) {
-    final canvas = context.canvas;
-
-    canvas.save();
+  void paint(Canvas canvas, Size size) {
+    final width = size.width;
+    final height = size.height;
+    final centerX = width / 2;
+    final centerY = height / 2;
+    final halfWidth = width / 2;
+    final halfHeight = height / 2;
 
     // draw the grid
     // painting starts from top left corner
     // so we need to translate the canvas to the center
     // because the sidebar takes up 200 pixels of space on the left,
     // we need to translate the canvas by 200 + half the width of the canvas
-    canvas.translate(400 + size.width / 2, size.height / 2);
+    canvas.translate(centerX, centerY);
 
     // draw the grid lines
     final paint = Paint()
-      ..color = _lineColor
-      ..strokeWidth = _lineWidth;
+      ..color = lineColor
+      ..strokeWidth = lineWidth;
 
     void _drawAxes() {
       // draw the x-axis
       canvas.drawLine(
-        Offset(-size.width / 2, 0),
-        Offset(size.width / 2, 0),
+        Offset(-halfWidth, 0),
+        Offset(halfWidth, 0),
         paint,
       );
 
       // draw the y-axis
       canvas.drawLine(
-        Offset(0, -size.height / 2),
-        Offset(0, size.height / 2),
+        Offset(0, -halfHeight),
+        Offset(0, halfHeight),
         paint,
       );
 
       // draw the x-axis ticks
-      for (var i = 0.0; i < size.width / 2; i += _scaleX) {
+      for (var i = 0.0; i < halfWidth; i += scaleX) {
         // draw the positive ticks
         canvas.drawLine(
           Offset(i.toDouble(), 0),
@@ -231,34 +189,34 @@ class CartesianPaperRenderObject extends RenderBox {
       // draw the grid lines
       paint.strokeWidth = 0.5;
       paint.color = Colors.grey[300]!;
-      for (var i = 0.0; i < size.width / 2; i += _scaleX) {
+      for (var i = 0.0; i < halfWidth; i += scaleX) {
         // draw the positive grid lines
         canvas.drawLine(
-          Offset(i.toDouble(), -size.height / 2),
-          Offset(i.toDouble(), size.height / 2),
+          Offset(i.toDouble(), -halfHeight),
+          Offset(i.toDouble(), halfHeight),
           paint,
         );
 
         // draw the negative grid lines
         canvas.drawLine(
-          Offset(-i.toDouble(), -size.height / 2),
-          Offset(-i.toDouble(), size.height / 2),
+          Offset(-i.toDouble(), -halfHeight),
+          Offset(-i.toDouble(), halfHeight),
           paint,
         );
       }
 
-      for (var i = 0.0; i < size.height / 2; i += _scaleY) {
+      for (var i = 0.0; i < halfHeight; i += scaleY) {
         // draw the positive grid lines
         canvas.drawLine(
-          Offset(-size.width / 2, i.toDouble()),
-          Offset(size.width / 2, i.toDouble()),
+          Offset(-halfHeight, i.toDouble()),
+          Offset(halfWidth, i.toDouble()),
           paint,
         );
 
         // draw the negative grid lines
         canvas.drawLine(
-          Offset(-size.width / 2, -i.toDouble()),
-          Offset(size.width / 2, -i.toDouble()),
+          Offset(-halfWidth, -i.toDouble()),
+          Offset(halfWidth, -i.toDouble()),
           paint,
         );
       }
@@ -271,12 +229,12 @@ class CartesianPaperRenderObject extends RenderBox {
 
     void _drawLabels() {
       // draw the x-axis labels
-      for (var i = 0.0; i < size.width / 2; i += _scaleX) {
+      for (var i = 0.0; i < halfWidth; i += scaleX) {
         // increments of 2
         textPainter.text = TextSpan(
-          text: (i / _scaleX * _increment).round().toString(),
+          text: (i / scaleX * increment).round().toString(),
           style: TextStyle(
-            color: _lineColor,
+            color: lineColor,
             fontSize: 10,
           ),
         );
@@ -284,9 +242,9 @@ class CartesianPaperRenderObject extends RenderBox {
         textPainter.paint(canvas, Offset(i.toDouble() - 5, 5));
 
         textPainter.text = TextSpan(
-          text: (-i / _scaleX * _increment).round().toString(),
+          text: (-i / scaleX * increment).round().toString(),
           style: TextStyle(
-            color: _lineColor,
+            color: lineColor,
             fontSize: 10,
           ),
         );
@@ -295,11 +253,11 @@ class CartesianPaperRenderObject extends RenderBox {
       }
 
       // draw the y-axis labels
-      for (var i = 0.0; i < size.height / 2; i += _scaleY) {
+      for (var i = 0.0; i < halfHeight; i += scaleY) {
         textPainter.text = TextSpan(
-          text: (i / _scaleY * _increment).round().toString(),
+          text: (i / scaleY * increment).round().toString(),
           style: TextStyle(
-            color: _lineColor,
+            color: lineColor,
             shadows: const <Shadow>[
               Shadow(
                 offset: Offset(0.0, 0.0),
@@ -314,9 +272,9 @@ class CartesianPaperRenderObject extends RenderBox {
         textPainter.paint(canvas, Offset(-10, i.toDouble() - 5));
 
         textPainter.text = TextSpan(
-          text: (-i / _scaleY * _increment).round().toString(),
+          text: (-i / scaleY * increment).round().toString(),
           style: TextStyle(
-            color: _lineColor,
+            color: lineColor,
             fontSize: 10,
           ),
         );
@@ -328,8 +286,8 @@ class CartesianPaperRenderObject extends RenderBox {
     void _drawPlots() {
       // !NOTE: Draw expressions
       // draw the expressions
-      for (var idx = 0; idx < _data.length; idx++) {
-        final expression = _data[idx];
+      for (var idx = 0; idx < data.length; idx++) {
+        final expression = data[idx];
         if (!expression.isValid()) {
           continue;
         }
@@ -339,17 +297,17 @@ class CartesianPaperRenderObject extends RenderBox {
           ..strokeWidth = 2;
 
         // draw the expression
-        final increment = _scaleX / 20; // or some smaller value
-        for (var i = -size.width / 2; i < size.width / 2; i += increment) {
-          final x = i / _scaleX * _increment;
+        final increment = scaleX / 8; // or some smaller value
+        for (var i = -halfWidth; i < halfWidth; i += increment) {
+          final x = i / scaleX * increment;
           final y = expression.eval(x);
           if (!(i - increment).isNaN && !x.isNaN && !y.isNaN) {
             canvas.drawLine(
               Offset(
-                  (i - increment) / _scaleX * _increment * _scaleX,
-                  -(expression.eval((i - increment) / _scaleX * _increment) *
-                      _scaleY)),
-              Offset(x * _scaleX, -y * _scaleY),
+                  (i - increment) / scaleX * increment * scaleX,
+                  -(expression.eval((i - increment) / scaleX * increment) *
+                      scaleY)),
+              Offset(x * scaleX, -y * scaleY),
               paint,
             );
           }
