@@ -305,7 +305,7 @@ class CartesianPaper extends CustomPainter {
           ..strokeWidth = 2;
 
         // draw the expression
-        final increment = scaleX / 8; // or some smaller value
+        final increment = scaleX / 14; // or some smaller value
         for (var i = -halfWidth; i < halfWidth; i += increment) {
           final x = i / scaleX * increment;
           final y = expression.eval(x);

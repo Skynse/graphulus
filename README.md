@@ -1,3 +1,5 @@
 # graphulus
 
-A new Flutter project.
+Proof of concept graphing tool inspired by Desmos
+
+![image](assets/screen.png)
